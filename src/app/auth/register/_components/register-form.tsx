@@ -7,8 +7,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { CloseToast } from '@/components/ui/sonner';
 import { signIn } from '@/lib/auth-client';
-import { LoginFormSchema } from '@/lib/schema';
-import { signInUser } from '@/server/users';
+import { RegisterFormSchema } from '@/lib/schema';
+import { signUpUser } from '@/server/users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -18,34 +18,44 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [isGooglePending, startGoogleTransition] = useTransition();
   const [isGithubPending, startGithubTransition] = useTransition();
+  const [isVisible, setIsVisible] = useState({
+    password: false,
+    confirmPassword: false,
+  });
 
-  const form = useForm<z.infer<typeof LoginFormSchema>>({
-    resolver: zodResolver(LoginFormSchema),
+  const toggleVisibility = (field: keyof typeof isVisible) => {
+    setIsVisible((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  const form = useForm<z.infer<typeof RegisterFormSchema>>({
+    resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
+      confirmPassword: '',
     },
   });
 
-  const toggleVisibility = () => setIsVisible((prevState) => !prevState);
-
-  async function onSubmit(values: z.infer<typeof LoginFormSchema>) {
+  async function onSubmit(values: z.infer<typeof RegisterFormSchema>) {
     try {
       setIsLoading(true);
-      const response = await signInUser(values.email, values.password);
+      const response = await signUpUser(values.email, values.password, values.name);
       if (response.success) {
         toast.success(response.message.title, {
           description: response.message.description,
           action: CloseToast,
         });
         form.reset();
-        router.push('/dashboard');
+        router.push('/auth/login');
       } else {
         toast.error(response.message.title, {
           description: response.message.description,
@@ -63,7 +73,7 @@ export default function LoginForm() {
     startGoogleTransition(async () => {
       await signIn.social({
         provider: 'google',
-        callbackURL: '/dashboard',
+        callbackURL: '/dashboard?login=success',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');
@@ -77,7 +87,7 @@ export default function LoginForm() {
     startGithubTransition(async () => {
       await signIn.social({
         provider: 'github',
-        callbackURL: '/dashboard',
+        callbackURL: '/dashboard?login=success',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');
@@ -93,12 +103,28 @@ export default function LoginForm() {
         <div className="mb-4 flex items-center justify-center gap-2 text-2xl">
           <Feather className="text-primary" /> <span className="font-pacifico">Memoria</span>
         </div>
-        <CardTitle className="text-2xl">Welcome to Memoria</CardTitle>
-        <CardDescription className="">Please login to continue</CardDescription>
+        <CardTitle className="text-2xl capitalize">Create your account</CardTitle>
+        <CardDescription className="text-pretty">
+          Sign up to start organizing your notes and boost your productivity
+        </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" className="h-11" maxLength={100} autoFocus {...field} />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
@@ -106,14 +132,7 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="email@example.com"
-                      className="h-11"
-                      maxLength={100}
-                      autoFocus
-                      {...field}
-                    />
+                    <Input type="email" placeholder="email@example.com" className="h-11" maxLength={100} {...field} />
                   </FormControl>
 
                   <FormMessage />
@@ -125,19 +144,12 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center">
-                    <FormLabel>Password</FormLabel>
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-muted-foreground ml-auto inline-block text-sm hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <FormLabel>Password</FormLabel>
+
                   <FormControl>
                     <div className="relative">
                       <Input
-                        type={isVisible ? 'text' : 'password'}
+                        type={isVisible.password ? 'text' : 'password'}
                         placeholder="Password"
                         className="h-11 pe-12"
                         maxLength={64}
@@ -148,12 +160,51 @@ export default function LoginForm() {
                         variant={'ghost'}
                         type="button"
                         className="text-muted-foreground hover:text-muted-foreground absolute top-1/2 right-2 size-8 -translate-y-1/2"
-                        onClick={toggleVisibility}
-                        aria-label={isVisible ? 'Hide password' : 'Show password'}
-                        aria-pressed={isVisible}
+                        onClick={() => toggleVisibility('password')}
+                        aria-label={isVisible.password ? 'Hide password' : 'Show password'}
+                        aria-pressed={isVisible.password}
                         aria-controls="password"
                       >
-                        {isVisible ? (
+                        {isVisible.password ? (
+                          <EyeOffIcon size={16} aria-hidden="true" />
+                        ) : (
+                          <EyeIcon size={16} aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={isVisible.confirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm password"
+                        className="h-11 pe-12"
+                        maxLength={64}
+                        {...field}
+                        aria-invalid={!!form.formState.errors.password}
+                      />
+                      <Button
+                        variant={'ghost'}
+                        type="button"
+                        className="text-muted-foreground hover:text-muted-foreground absolute top-1/2 right-2 size-8 -translate-y-1/2"
+                        onClick={() => toggleVisibility('confirmPassword')}
+                        aria-label={isVisible.confirmPassword ? 'Hide password' : 'Show password'}
+                        aria-pressed={isVisible.confirmPassword}
+                        aria-controls="password"
+                      >
+                        {isVisible.confirmPassword ? (
                           <EyeOffIcon size={16} aria-hidden="true" />
                         ) : (
                           <EyeIcon size={16} aria-hidden="true" />
@@ -167,14 +218,7 @@ export default function LoginForm() {
               )}
             />
             <Button type="submit" className="h-11 w-full text-white" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="size-5 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Login'
-              )}
+              {isLoading ? <Loader2 className="size-4 animate-spin" /> : 'Register'}
             </Button>
           </form>
         </Form>
@@ -184,10 +228,7 @@ export default function LoginForm() {
         <div className="flex flex-col gap-3">
           <Button className="h-11 w-full" variant={'outline'} disabled={isGooglePending} onClick={handleGoogleLogin}>
             {isGooglePending ? (
-              <>
-                <Loader2 className="size-5 animate-spin" />
-                Loading...
-              </>
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
                 <Google className="size-5" />
@@ -197,10 +238,7 @@ export default function LoginForm() {
           </Button>
           <Button className="h-11 w-full" variant={'outline'} disabled={isGithubPending} onClick={handleGithubLogin}>
             {isGithubPending ? (
-              <>
-                <Loader2 className="size-5 animate-spin" />
-                Loading...
-              </>
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               <>
                 <GitHub className="size-5" />
@@ -212,9 +250,9 @@ export default function LoginForm() {
       </CardContent>
       <CardFooter className="justify-center border-t pt-0">
         <p className="text-muted-foreground text-sm">
-          No account yet?{' '}
-          <Link href={'/auth/register'} className="text-foreground hover:underline">
-            Register
+          Already have an account?{' '}
+          <Link href={'/auth/login'} className="text-foreground hover:underline">
+            Login
           </Link>
         </p>
       </CardFooter>

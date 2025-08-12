@@ -72,7 +72,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${pacifico.variable} ${robotoMono.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-          <Toaster />
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>

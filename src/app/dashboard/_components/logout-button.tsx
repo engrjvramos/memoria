@@ -13,7 +13,6 @@ export default function LogoutButton() {
       fetchOptions: {
         onSuccess: () => {
           router.push('/auth/login');
-          toast.success('Successfully logged out!');
         },
         onError: () => {
           toast.error('Logout failed');

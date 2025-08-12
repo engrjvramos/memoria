@@ -11,12 +11,21 @@ export const signInUser = async (email: string, password: string) => {
       },
     });
 
-    return { success: true, message: 'Signed in successfully' };
+    return {
+      success: true,
+      message: {
+        title: 'Login successful!',
+        description: '',
+      },
+    };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'Failed to sign in',
+      message: {
+        title: 'Failed to login',
+        description: e.message,
+      },
     };
   }
 };
@@ -31,12 +40,21 @@ export const signUpUser = async (email: string, password: string, name: string) 
       },
     });
 
-    return { success: true, message: 'Signed up successfully' };
+    return {
+      success: true,
+      message: {
+        title: 'Registration successful!',
+        description: 'Please check your email for verification',
+      },
+    };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'Failed to sign up',
+      message: {
+        title: 'Failed to register',
+        description: e.message,
+      },
     };
   }
 };
