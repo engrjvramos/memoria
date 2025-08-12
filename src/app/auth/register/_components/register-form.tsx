@@ -73,7 +73,7 @@ export default function RegisterForm() {
     startGoogleTransition(async () => {
       await signIn.social({
         provider: 'google',
-        callbackURL: '/dashboard?login=success',
+        callbackURL: '/dashboard',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');
@@ -87,7 +87,7 @@ export default function RegisterForm() {
     startGithubTransition(async () => {
       await signIn.social({
         provider: 'github',
-        callbackURL: '/dashboard?login=success',
+        callbackURL: '/dashboard',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');
