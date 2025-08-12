@@ -88,7 +88,7 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-[540px] p-8 sm:p-12">
+    <Card className="w-full max-w-[540px] gap-12 p-8 sm:p-12">
       <CardHeader className="justify-center px-0 text-center">
         <div className="mb-4 flex items-center justify-center gap-2 text-2xl">
           <Feather className="text-primary" /> <span className="font-pacifico">Memoria</span>

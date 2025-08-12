@@ -3,14 +3,14 @@
 import { Feather, GitHub, Google } from '@/components/svg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { CloseToast } from '@/components/ui/sonner';
 import { signIn } from '@/lib/auth-client';
 import { RegisterFormSchema } from '@/lib/schema';
 import { signUpUser } from '@/server/users';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, InfoIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -98,7 +98,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-[540px] p-8 sm:p-12">
+    <Card className="w-full max-w-[540px] gap-12 p-8 sm:p-12">
       <CardHeader className="justify-center px-0 text-center">
         <div className="mb-4 flex items-center justify-center gap-2 text-2xl">
           <Feather className="text-primary" /> <span className="font-pacifico">Memoria</span>
@@ -173,7 +173,10 @@ export default function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
-
+                  <FormDescription className="flex items-center gap-2">
+                    <InfoIcon className="size-4" />
+                    At least 8 characters
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

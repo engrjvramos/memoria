@@ -1,14 +1,14 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import LoginForm from '../_components/login-form';
+import ResetPasswordForm from '../_components/reset-password-form';
 
-export default async function LoginPage() {
+export default async function ResetPasswordPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (session) redirect('/dashboard');
 
-  return <LoginForm />;
+  return <ResetPasswordForm />;
 }

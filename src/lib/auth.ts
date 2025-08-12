@@ -1,3 +1,4 @@
+import PasswordResetEmail from '@/components/emails/reset-password-email';
 import EmailVerification from '@/components/emails/verification-email';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
@@ -16,13 +17,21 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }) => {
+      await resend.emails.send({
+        from: 'Memoria <onboarding@resend.dev>',
+        to: [user.email],
+        subject: 'Reset your password',
+        react: PasswordResetEmail({ userName: user.name, resetUrl: url, requestTime: new Date().toLocaleString() }),
+      });
+    },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       await resend.emails.send({
         from: 'Memoria <onboarding@resend.dev>',
         to: [user.email],
-        subject: 'Memoria - Verify your email address',
+        subject: 'Verify your email address',
         react: EmailVerification({ userName: user.name, verificationUrl: url }),
       });
     },
