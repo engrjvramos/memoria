@@ -11,8 +11,8 @@ const PasswordResetEmail = ({ resetUrl, userName, requestTime }: Props) => {
     <Html lang="en" dir="ltr">
       <Tailwind>
         <Head />
-        <Body className="bg-gray-100 py-[40px] font-sans">
-          <Container className="mx-auto max-w-[600px] rounded-[8px] bg-white p-[40px] shadow-sm">
+        <Body className="bg-gray-100 p-5 font-sans sm:py-[40px]">
+          <Container className="mx-auto max-w-[600px] rounded-[8px] bg-white p-5 shadow-sm sm:p-[40px]">
             <Section>
               <Text className="mb-[24px] text-center text-[24px] font-bold text-gray-900">Reset Your Password</Text>
 

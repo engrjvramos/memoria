@@ -40,15 +40,14 @@ export default function LoginForm() {
       setIsLoading(true);
       const response = await signInUser(values.email, values.password);
       if (response.success) {
-        toast.success(response.message.title, {
-          description: response.message.description,
+        toast.success(response.message, {
           action: CloseToast,
         });
         form.reset();
         router.push('/dashboard');
       } else {
-        toast.error(response.message.title, {
-          description: response.message.description,
+        toast.error('Failed to login', {
+          description: response.message,
           action: CloseToast,
         });
       }

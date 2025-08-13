@@ -13,19 +13,13 @@ export const signInUser = async (email: string, password: string) => {
 
     return {
       success: true,
-      message: {
-        title: 'Login successful!',
-        description: '',
-      },
+      message: 'Login successful!',
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: {
-        title: 'Failed to login',
-        description: e.message,
-      },
+      message: e.message,
     };
   }
 };
@@ -42,19 +36,13 @@ export const signUpUser = async (email: string, password: string, name: string) 
 
     return {
       success: true,
-      message: {
-        title: 'Registration successful!',
-        description: 'Please check your email for verification',
-      },
+      message: 'Please check your email for verification',
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: {
-        title: 'Failed to register',
-        description: e.message,
-      },
+      message: e.message,
     };
   }
 };

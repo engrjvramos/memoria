@@ -50,15 +50,15 @@ export default function RegisterForm() {
       setIsLoading(true);
       const response = await signUpUser(values.email, values.password, values.name);
       if (response.success) {
-        toast.success(response.message.title, {
-          description: response.message.description,
+        toast.success('Registration Successful!', {
+          description: response.message,
           action: CloseToast,
         });
         form.reset();
         router.push('/auth/login');
       } else {
-        toast.error(response.message.title, {
-          description: response.message.description,
+        toast.error('Failed to register', {
+          description: response.message,
           action: CloseToast,
         });
       }

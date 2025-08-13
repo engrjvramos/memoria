@@ -19,7 +19,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
-        from: 'Memoria <onboarding@resend.dev>',
+        from: 'Memoria <noreply@jobie.dev>',
         to: [user.email],
         subject: 'Reset your password',
         react: PasswordResetEmail({ userName: user.name, resetUrl: url, requestTime: new Date().toLocaleString() }),
@@ -29,7 +29,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       await resend.emails.send({
-        from: 'Memoria <onboarding@resend.dev>',
+        from: 'Memoria <noreply@jobie.dev>',
         to: [user.email],
         subject: 'Verify your email address',
         react: EmailVerification({ userName: user.name, verificationUrl: url }),
