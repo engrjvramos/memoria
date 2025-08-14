@@ -8,7 +8,7 @@ export default async function ResetPasswordPage() {
     headers: await headers(),
   });
 
-  if (session) redirect('/dashboard');
+  if (session) redirect('/dashboard/all');
 
   return <ResetPasswordForm />;
 }

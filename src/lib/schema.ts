@@ -63,9 +63,6 @@ export const CreateNoteSchema = z.object({
   description: z.string().min(3, {
     message: 'Description must be at least 3 characters long',
   }),
-  status: z.enum(noteStatus, {
-    message: 'Status is required',
-  }),
   tags: z
     .array(
       z.object({

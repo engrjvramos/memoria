@@ -44,7 +44,7 @@ export default function LoginForm() {
           action: CloseToast,
         });
         form.reset();
-        router.push('/dashboard');
+        router.push('/dashboard/all');
       } else {
         toast.error('Failed to login', {
           description: response.message,
@@ -62,7 +62,7 @@ export default function LoginForm() {
     startGoogleTransition(async () => {
       await signIn.social({
         provider: 'google',
-        callbackURL: '/dashboard',
+        callbackURL: '/dashboard/all',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');
@@ -76,7 +76,7 @@ export default function LoginForm() {
     startGithubTransition(async () => {
       await signIn.social({
         provider: 'github',
-        callbackURL: '/dashboard',
+        callbackURL: '/dashboard/all',
         fetchOptions: {
           onError: () => {
             toast.error('Oops! Something went wrong.');

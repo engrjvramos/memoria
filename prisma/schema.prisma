@@ -76,10 +76,10 @@ model Verification {
 }
 
 model Note {
-  id          String     @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   description String
-  status      NoteStatus @default(Draft)
+  isArchived  Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,10 +93,4 @@ model Tag {
   id    String @id @default(uuid())
   name  String @unique
   notes Note[] @relation("NoteTags")
-}
-
-enum NoteStatus {
-  Draft
-  Archived
-  Published
 }

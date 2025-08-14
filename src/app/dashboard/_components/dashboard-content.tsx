@@ -1,104 +1,176 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArchiveIcon, ArrowLeftIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { tryCatch } from '@/hooks/useTryCatch';
+import { cn } from '@/lib/utils';
+import { archiveNote, deleteNote, UserNotesType } from '@/server/actions';
+import { ArrowLeftIcon, Clock3Icon, PlusIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import CreateNote from './create-note';
+import ViewNote from './view-note';
 
-const MOCK_DATA = [
-  {
-    id: '1',
-    title: 'My first note',
-    textContent: 'This is the note content',
-    archived: false,
-    tags: ['Dev', 'React'],
-    updatedAt: '29 Oct 2024 11:46 AM',
-  },
-  {
-    id: '2',
-    title: 'My second note',
-    textContent: 'This is the note content',
-    archived: false,
-    tags: ['Travel', 'Personal'],
-    updatedAt: '28 Oct 2024 5:52 PM',
-  },
-  {
-    id: '3',
-    title: 'My third note',
-    textContent: 'This is the note content',
-    archived: false,
-    tags: ['Cooking', 'Recipes'],
-    updatedAt: '27 Oct 2024 3:15 AM',
-  },
-];
+type Props = {
+  userNotes: UserNotesType[];
+  category: string;
+  search?: string;
+};
 
-export default function DashboardContent() {
+export default function DashboardContent({ userNotes, category, search }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [pendingDelete, startTransitionDelete] = useTransition();
+  const [pendingArchive, startTransitionArchive] = useTransition();
+  const [activeNote, setActiveNote] = useState<UserNotesType | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  const isEditorOpen = searchParams.get('editor') === 'true';
+  async function handleDelete() {
+    startTransitionDelete(async () => {
+      if (!activeNote) return;
+      const { data: result, error } = await tryCatch(deleteNote(activeNote.id));
+      if (error) {
+        toast.error('An unexpected error occurred. Please try again.');
+        return;
+      }
 
-  const toggleEditor = () => {
-    const params = new URLSearchParams(searchParams);
-    if (isEditorOpen) {
-      params.delete('editor');
+      if (result.success) {
+        toast.success(result.message);
+        router.refresh();
+      } else if (!result.success) {
+        toast.error(result.message);
+      }
+    });
+  }
+
+  async function handleArchive() {
+    startTransitionArchive(async () => {
+      if (!activeNote) return;
+      const { data: result, error } = await tryCatch(archiveNote(activeNote.id, !activeNote.isArchived));
+      if (error) {
+        toast.error('An unexpected error occurred. Please try again.');
+        return;
+      }
+
+      if (result.success) {
+        toast.success(result.message);
+        router.refresh();
+      } else if (!result.success) {
+        toast.error(result.message);
+      }
+    });
+  }
+
+  useEffect(() => {
+    if (userNotes.length > 0) {
+      setActiveNote(userNotes[0]);
     } else {
-      params.set('editor', 'true');
+      setActiveNote(null);
     }
-    router.push(`?${params.toString()}`, { scroll: false });
+  }, [userNotes]);
+
+  useEffect(() => {
+    if (isEditorOpen) {
+      setActiveNote(null);
+    }
+  }, [isEditorOpen]);
+
+  const handleViewNote = (id: string) => {
+    const note = userNotes.find((n) => n.id === id) || null;
+    if (isEditorOpen) {
+      setIsEditorOpen(false);
+    }
+
+    setActiveNote(note);
   };
+
+  const emptyStateDescription =
+    category === 'all'
+      ? "You don't have any notes yet. Start a new note to capture your thoughts and ideas."
+      : 'No notes have been archived yet. Move notes here for safekeeping.';
 
   return (
     <div className="flex w-full divide-x">
-      <section className="w-full max-w-md min-w-[18rem]">
-        <div className="space-y-8 px-4 py-6">
-          <Button className="h-12 w-full text-white capitalize" onClick={toggleEditor}>
-            {isEditorOpen ? (
-              <>
-                <ArrowLeftIcon /> Back
-              </>
-            ) : (
-              <>
-                <PlusIcon /> Create New Note
-              </>
-            )}
-          </Button>
+      <section className="flex h-full w-full max-w-md min-w-[18rem] flex-col">
+        <div className="p-4">
+          <div className="flex h-23 items-center justify-center px-4">
+            <Button className="h-12 w-full text-white capitalize" onClick={() => setIsEditorOpen((prev) => !prev)}>
+              {isEditorOpen ? (
+                <>
+                  <ArrowLeftIcon /> Back
+                </>
+              ) : (
+                <>
+                  <PlusIcon /> Create New Note
+                </>
+              )}
+            </Button>
+          </div>
 
-          <ul className="flex flex-col gap-1">
-            {MOCK_DATA.map(({ id, tags, title, updatedAt }) => (
-              <li key={id}>
-                <Button variant={'ghost'} className="h-auto w-full flex-col items-start gap-3 p-4">
-                  <h1 className="text-left text-base font-semibold text-wrap">{title}</h1>
-                  <div className="flex items-center gap-2">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant={'secondary'} className="rounded bg-neutral-200 dark:bg-neutral-700">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="text-muted-foreground text-xs">{updatedAt}</div>
+          <ul className="no-scrollbar max-h-[calc(100vh-10.75rem)] overflow-y-auto border-t py-6">
+            {isEditorOpen && (
+              <li>
+                <Button
+                  variant={'ghost'}
+                  className="bg-accent dark:bg-accent/50 h-auto w-full flex-col items-start gap-3 truncate p-4"
+                >
+                  <h1 className="text-left text-base font-semibold text-wrap">Untitled Note</h1>
                 </Button>
               </li>
-            ))}
+            )}
+            {userNotes.length === 0 ? (
+              <li className="text-muted-foreground px-4 py-6 text-center text-balance">
+                {search ? (
+                  <p className="text-muted-foreground">
+                    No notes matched <span className="font-semibold">&quot;{search}&quot;</span>. Try adjusting your
+                    keywords.
+                  </p>
+                ) : (
+                  emptyStateDescription
+                )}
+              </li>
+            ) : (
+              userNotes.map(({ id, title, updatedAt, description }) => (
+                <li key={id} className="border-b py-2 last:border-b-0">
+                  <Button
+                    variant={'ghost'}
+                    className={cn(
+                      'h-auto w-full flex-col items-start gap-3 truncate p-4',
+                      activeNote?.id === id && 'bg-accent dark:bg-accent/50',
+                    )}
+                    onClick={() => handleViewNote(id)}
+                  >
+                    <h1 className="line-clamp-2 max-w-full truncate text-left text-base font-semibold text-wrap">
+                      {title}
+                    </h1>
+                    <p className="text-muted-foreground line-clamp-2 w-full truncate text-left text-wrap">
+                      {description}
+                    </p>
+
+                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <Clock3Icon />
+                      {updatedAt.toLocaleString()}
+                    </div>
+                  </Button>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       </section>
-      <section className="flex-1">
-        <div className="flex flex-col gap-3 px-4 py-6">{isEditorOpen ? <CreateNote /> : 'Hello'}</div>
+      <section className="max-h-[calc(100vh-5rem)] flex-1 overflow-y-auto">
+        <div className="flex h-full flex-col gap-3">
+          {isEditorOpen && <CreateNote setIsEditorOpen={setIsEditorOpen} category={category} />}
+          {!isEditorOpen && activeNote && (
+            <ViewNote
+              data={activeNote}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+              pendingArchive={pendingArchive}
+              pendingDelete={pendingDelete}
+            />
+          )}
+        </div>
       </section>
-      {!isEditorOpen && (
-        <section className="w-full max-w-xs">
-          <div className="flex flex-col gap-3 px-4 py-6">
-            <Button variant={'outline'} className="h-12 w-full justify-start">
-              <ArchiveIcon className="size-4" /> Archive Note
-            </Button>
-            <Button variant={'destructive'} className="h-12 w-full justify-start">
-              <Trash2Icon className="size-4" /> Delete Note
-            </Button>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

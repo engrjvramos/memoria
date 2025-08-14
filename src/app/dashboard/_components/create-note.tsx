@@ -2,18 +2,22 @@ import RichTextEditor from '@/components/rich-text-editor/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { tryCatch } from '@/hooks/useTryCatch';
-import { CreateNoteSchema, noteStatus, TCreateNoteSchema } from '@/lib/schema';
+import { CreateNoteSchema, TCreateNoteSchema } from '@/lib/schema';
 import { createNote } from '@/server/actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { Dispatch, SetStateAction, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-export default function CreateNote() {
+type Props = {
+  setIsEditorOpen: Dispatch<SetStateAction<boolean>>;
+  category: string;
+};
+
+export default function CreateNote({ setIsEditorOpen, category }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -22,14 +26,13 @@ export default function CreateNote() {
     defaultValues: {
       title: '',
       description: '',
-      status: 'Draft',
       tags: [],
     },
   });
 
   async function onSubmit(values: TCreateNoteSchema) {
     startTransition(async () => {
-      const { data: result, error } = await tryCatch(createNote(values));
+      const { data: result, error } = await tryCatch(createNote(values, category === 'archive'));
       if (error) {
         toast.error('An unexpected error occurred. Please try again.');
         return;
@@ -38,7 +41,8 @@ export default function CreateNote() {
       if (result.success) {
         toast.success(result.message);
         form.reset();
-        router.push('/dashboard');
+        setIsEditorOpen(false);
+        router.refresh();
       } else if (!result.success) {
         toast.error(result.message);
       }
@@ -85,32 +89,7 @@ export default function CreateNote() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
 
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {noteStatus.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <Button type="submit" className="h-11 text-white" disabled={pending}>
             {pending ? (
               <>

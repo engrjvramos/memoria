@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { SIDEBAR_CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { TagIcon } from 'lucide-react';
-import { useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 export default function Sidebar() {
-  const [activeNotes, setActiveNotes] = useState('all');
+  const params = useParams();
+  const activeNotes = params.category as string;
 
   return (
     <aside className="border-r">
@@ -19,18 +21,17 @@ export default function Sidebar() {
           </div>
           <div className="space-y-1">
             {SIDEBAR_CATEGORIES.map(({ icon: Icon, id, label }) => (
-              <Button
+              <Link
                 key={id}
-                variant={'ghost'}
+                href={`/dashboard/${id}`}
                 className={cn(
-                  'h-10 w-full justify-start',
+                  'hover:bg-accent dark:hover:bg-accent/50 flex h-10 w-full items-center justify-start gap-2 rounded px-3',
                   activeNotes === id &&
                     '[&>svg]:text-primary bg-neutral-100 transition-none hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-800',
                 )}
-                onClick={() => setActiveNotes(id)}
               >
                 <Icon className="size-5" /> {label}
-              </Button>
+              </Link>
             ))}
           </div>
         </div>

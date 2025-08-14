@@ -8,6 +8,6 @@ export default async function ForgotPasswordPage() {
     headers: await headers(),
   });
 
-  if (session) redirect('/dashboard');
+  if (session) redirect('/dashboard/all');
   return <ForgotPasswordForm />;
 }
