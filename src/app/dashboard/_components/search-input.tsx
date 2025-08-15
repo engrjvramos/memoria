@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useNotes } from '@/hooks/useNotes';
 import { SearchIcon } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -10,6 +11,7 @@ export default function SearchInput() {
   const id = useId();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeNotes } = useNotes();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
 
@@ -30,9 +32,9 @@ export default function SearchInput() {
         params.delete('search');
       }
 
-      params.delete('page');
+      params.delete('tag');
 
-      router.push(`?${params.toString()}`, { scroll: false });
+      router.push(`/dashboard/${activeNotes}?${params.toString()}`, { scroll: false });
     }, 300);
 
     return () => clearTimeout(timeout);

@@ -41,6 +41,9 @@ dependencies:
   '@t3-oss/env-nextjs':
     specifier: ^0.13.8
     version: 0.13.8(typescript@5.9.2)(zod@4.0.17)
+  '@tiptap/extension-heading':
+    specifier: ^3.1.0
+    version: 3.1.0(@tiptap/core@3.1.0)
   '@tiptap/extension-text-align':
     specifier: ^3.1.0
     version: 3.1.0(@tiptap/core@3.1.0)
@@ -92,6 +95,9 @@ dependencies:
   tailwind-merge:
     specifier: ^3.3.1
     version: 3.3.1
+  uuid:
+    specifier: ^11.1.0
+    version: 11.1.0
   vaul:
     specifier: ^1.1.2
     version: 1.1.2(@types/react-dom@19.1.7)(@types/react@19.1.9)(react-dom@19.1.0)(react@19.1.0)
@@ -6524,6 +6530,11 @@ packages:
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
+
+  /uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+    dev: false
 
   /validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}

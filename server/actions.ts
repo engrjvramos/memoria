@@ -3,9 +3,8 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { CreateNoteSchema, TCreateNoteSchema } from '@/lib/schema';
-import { ApiResponse } from '@/lib/types';
+import { ApiResponse, TNoteCounts } from '@/lib/types';
 import { headers } from 'next/headers';
-import { notFound } from 'next/navigation';
 
 export async function createNote(values: TCreateNoteSchema, isArchived: boolean): Promise<ApiResponse> {
   try {
@@ -23,15 +22,27 @@ export async function createNote(values: TCreateNoteSchema, isArchived: boolean)
       };
     }
 
+    // Extract tags from validated form data
+    const { title, description, tags } = validation.data;
+
     await prisma.note.create({
       data: {
-        ...validation.data,
-        userId: userId,
+        title,
+        description,
+        userId,
         isArchived,
-        tags: {
-          connect: validation.data.tags.map((tag) => ({ id: tag.id })),
+        noteTags: {
+          create: tags.map(({ name }) => ({
+            tag: {
+              connectOrCreate: {
+                where: { name },
+                create: { name },
+              },
+            },
+          })),
         },
       },
+      include: { noteTags: { include: { tag: true } } },
     });
 
     return {
@@ -39,66 +50,126 @@ export async function createNote(values: TCreateNoteSchema, isArchived: boolean)
       message: 'Note created successfully',
     };
   } catch (error) {
-    const e = error as Error;
-
+    console.error(error);
     return {
       success: false,
-      message: e.message || 'Failed to create note',
+      message: 'Failed to create note',
     };
   }
 }
 
-export async function getUserNotes({ isArchived = false, searchTerm }: { isArchived: boolean; searchTerm: string }) {
+export async function getUserNotes({ isArchived = false, userId }: { isArchived?: boolean; userId: string }) {
   const data = await prisma.note.findMany({
     where: {
-      isArchived: isArchived,
-      OR: [
-        { title: { contains: searchTerm, mode: 'insensitive' } },
-        { description: { contains: searchTerm, mode: 'insensitive' } },
-        { tags: { some: { name: searchTerm } } },
-      ],
+      userId,
+      isArchived,
     },
-    orderBy: {
-      createdAt: 'desc',
-    },
+    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
       title: true,
       description: true,
       updatedAt: true,
       isArchived: true,
+      noteTags: {
+        select: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  return data;
+  const transformedNotes = data.map((note) => {
+    return {
+      ...note,
+      tags: note.noteTags.map((noteTag) => noteTag.tag),
+    };
+  });
+
+  return transformedNotes;
 }
 
 export type UserNotesType = Awaited<ReturnType<typeof getUserNotes>>[0];
 
-export async function getNoteById(id: string) {
-  const data = await prisma.note.findUnique({
+export async function getNoteById(noteId: string, userId: string) {
+  // await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  const note = await prisma.note.findUnique({
     where: {
-      id: id,
+      id: noteId,
+      userId: userId,
     },
     select: {
       id: true,
       title: true,
       description: true,
-      isArchived: true,
       updatedAt: true,
+      isArchived: true,
+      noteTags: {
+        select: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  if (!data) return notFound();
+  if (!note) {
+    return null;
+  }
 
-  return data;
+  const transformedNote = {
+    ...note,
+    tags: note.noteTags.map((nt) => nt.tag),
+  };
+
+  return transformedNote;
 }
 
 export async function deleteNote(id: string): Promise<ApiResponse> {
   try {
+    const note = await prisma.note.findUnique({
+      where: { id },
+      include: {
+        noteTags: {
+          include: { tag: true },
+        },
+      },
+    });
+
+    if (!note) {
+      return {
+        success: false,
+        message: 'Note not found',
+      };
+    }
+
     await prisma.note.delete({
       where: { id },
     });
+
+    for (const noteTag of note.noteTags) {
+      const tagId = noteTag.tag.id;
+
+      const tagStillUsed = await prisma.noteTag.findFirst({
+        where: { tagId },
+      });
+
+      if (!tagStillUsed) {
+        await prisma.tag.delete({
+          where: { id: tagId },
+        });
+      }
+    }
 
     return {
       success: true,
@@ -133,4 +204,64 @@ export async function archiveNote(id: string, archive: boolean): Promise<ApiResp
       message: e.message || 'Failed to update note archive status',
     };
   }
+}
+
+export async function updateNote(noteId: string, values: TCreateNoteSchema): Promise<ApiResponse> {
+  try {
+    const validation = CreateNoteSchema.safeParse(values);
+    if (!validation.success) {
+      return { success: false, message: 'Invalid form data' };
+    }
+
+    const { title, description, tags } = validation.data;
+
+    await prisma.noteTag.deleteMany({
+      where: { noteId },
+    });
+
+    await prisma.note.update({
+      where: { id: noteId },
+      data: {
+        title,
+        description,
+        noteTags: {
+          create: tags.map((tagInput) => ({
+            tag: {
+              connectOrCreate: {
+                where: { name: tagInput.name.toLowerCase() },
+                create: { name: tagInput.name.toLowerCase() },
+              },
+            },
+          })),
+        },
+      },
+    });
+
+    return { success: true, message: 'Note updated successfully' };
+  } catch (error) {
+    console.error('Error updating note:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Failed to update note' };
+  }
+}
+
+export async function getNoteCounts(userId: string): Promise<TNoteCounts> {
+  const [allNotesCount, archivedNotesCount] = await prisma.$transaction([
+    prisma.note.count({
+      where: {
+        userId,
+        isArchived: false,
+      },
+    }),
+    prisma.note.count({
+      where: {
+        userId,
+        isArchived: true,
+      },
+    }),
+  ]);
+
+  return {
+    all: allNotesCount,
+    archived: archivedNotesCount,
+  };
 }

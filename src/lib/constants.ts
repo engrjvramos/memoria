@@ -1,5 +1,7 @@
 import { ArchiveIcon, HomeIcon } from 'lucide-react';
 
+export const VALID_CATEGORIES = ['all', 'archived'];
+
 export const SIDEBAR_CATEGORIES = [
   {
     id: 'all',
@@ -7,7 +9,7 @@ export const SIDEBAR_CATEGORIES = [
     icon: HomeIcon,
   },
   {
-    id: 'archive',
+    id: 'archived',
     label: 'Archived Notes',
     icon: ArchiveIcon,
   },

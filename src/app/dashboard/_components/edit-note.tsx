@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useNotes } from '@/hooks/useNotes';
 import { tryCatch } from '@/hooks/useTryCatch';
 import { CreateNoteSchema, TCreateNoteSchema } from '@/lib/schema';
-import { createNote } from '@/server/actions';
+import { updateNote, UserNotesType } from '@/server/actions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InfoIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import TagInput from './tag-input';
 
-export default function CreateNote() {
+export default function EditNote({ initialValues }: { initialValues: UserNotesType }) {
   const router = useRouter();
   const { activeNotes } = useNotes();
   const [pending, startTransition] = useTransition();
@@ -22,15 +22,15 @@ export default function CreateNote() {
   const form = useForm<TCreateNoteSchema>({
     resolver: zodResolver(CreateNoteSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      tags: [],
+      title: initialValues.title,
+      description: initialValues.description,
+      tags: initialValues.tags,
     },
   });
 
   async function onSubmit(values: TCreateNoteSchema) {
     startTransition(async () => {
-      const action = createNote(values, activeNotes === 'archived');
+      const action = updateNote(initialValues.id, values);
 
       const { data: result, error } = await tryCatch(action);
       if (error) {
@@ -40,8 +40,7 @@ export default function CreateNote() {
 
       if (result.success) {
         toast.success(result.message);
-        form.reset();
-        router.push(`/dashboard/${activeNotes}`);
+        router.push(`/dashboard/${activeNotes}/${initialValues.id}`);
       } else if (!result.success) {
         toast.error(result.message);
       }
@@ -50,7 +49,7 @@ export default function CreateNote() {
 
   return (
     <div className="flex h-full flex-col overflow-y-visible px-6 py-16 lg:mx-auto lg:w-full lg:max-w-[80rem]">
-      <h1 className="mb-10 text-2xl">Create New Note</h1>
+      <h1 className="mb-10 text-2xl">Edit Note</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
@@ -94,12 +93,6 @@ export default function CreateNote() {
 
                 <FormControl>
                   <RichTextEditor field={field} />
-                  {/* <Textarea
-                    placeholder="Start typing your note here..."
-                    className="min-h-32"
-                    {...field}
-                    aria-invalid={!!form.formState.errors.description}
-                  /> */}
                 </FormControl>
 
                 <FormMessage />
@@ -124,7 +117,7 @@ export default function CreateNote() {
                   Loading...
                 </>
               ) : (
-                'Create Note'
+                'Edit Note'
               )}
             </Button>
           </div>

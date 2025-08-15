@@ -67,7 +67,7 @@ export const CreateNoteSchema = z.object({
     .array(
       z.object({
         id: z.string().min(1, { message: 'ID is required' }),
-        text: z
+        name: z
           .string()
           .min(1, { message: 'Tag cannot be empty' })
           .max(30, { message: 'Tag must be at most 30 characters long' }),

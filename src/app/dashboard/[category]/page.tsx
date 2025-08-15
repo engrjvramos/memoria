@@ -1,33 +1,33 @@
-import { auth } from '@/lib/auth';
-import { getUserNotes } from '@/server/actions';
-import { headers } from 'next/headers';
-import { notFound, redirect } from 'next/navigation';
-import DashboardContent from '../_components/dashboard-content';
+'use client';
 
-const VALID_CATEGORIES = ['all', 'archive'];
+import { NoData } from '@/components/svg';
+import { Button } from '@/components/ui/button';
+import { useNotes } from '@/hooks/useNotes';
+import CreateNote from '../_components/create-note';
 
-type Props = {
-  params: Promise<{ category: string }>;
-  searchParams: Promise<{ search?: string }>;
-};
+export default function CategoryPage() {
+  const { modeParam, notes, handleModeSelect, searchParam } = useNotes();
 
-export default async function CategoryPage({ params, searchParams }: Props) {
-  const { category } = await params;
-  const { search } = await searchParams;
+  const isCreateMode = modeParam === 'create';
 
-  if (!VALID_CATEGORIES.includes(category)) {
-    notFound();
-  }
+  return (
+    <div className="flex w-full items-center justify-center">
+      {isCreateMode && <CreateNote />}
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) redirect('/auth/login');
-
-  const isArchived = category === 'archive';
-
-  const userNotes = await getUserNotes({ isArchived, searchTerm: search || '' });
-
-  return <DashboardContent userNotes={userNotes} category={category} search={search} />;
+      {!isCreateMode && notes.length === 0 && !searchParam && (
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <div className="mb-4 flex items-center justify-center">
+            <NoData className="text-primary size-40" />
+          </div>
+          <h2 className="text-xl font-semibold">No notes yet!</h2>
+          <p className="text-muted-foreground mt-2 mb-4 text-balance">
+            It looks a little empty here. Start by creating your first note.
+          </p>
+          <Button className="h-10 text-white capitalize" onClick={() => handleModeSelect('create')}>
+            Create Note
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }
